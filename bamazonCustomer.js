@@ -9,17 +9,22 @@ let connection = mysql.createConnection({
     database: "bamazon_db"
 });
 
-function displayProducts() {
-    connection.connect((error) => {
-        if (error) throw error;
-        console.log(`successfully connected on thread ${connection.threadId}`);
-        
-        connection.query("SELECT * FROM products", (error, results) => {
-            if (error) throw error;
-            console.log(results);
-            connection.end();
-        });
-    });
-};
+function getProductData() {
+    return new Promise(function (resolve, reject) {
+        connection.connect((error) => {
+            if (error) return reject(error);
+            console.log(`successfully connected on thread ${connection.threadId}`);
 
-displayProducts();
+            connection.query("SELECT * FROM products", (error, results) => {
+                if (error) return reject(error);
+                resolve(results);
+                connection.end();
+            });
+
+        });
+    })
+}
+
+getProductData().then((results => {
+    console.log(results);
+}));
