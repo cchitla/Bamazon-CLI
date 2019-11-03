@@ -9,6 +9,13 @@ let connection = mysql.createConnection({
     database: "bamazon_db"
 });
 
+getProductData().then((results) => {
+    displayProducts(results);
+    //inquirer ask item_id for purchase, then quantity to purchase
+    // makePurchase(itemId, quantity)
+});
+
+
 function getProductData() {
     return new Promise(function (resolve, reject) {
         connection.connect((error) => {
@@ -20,11 +27,47 @@ function getProductData() {
                 resolve(results);
                 connection.end();
             });
-
         });
+    });
+};
+
+function displayProducts(data) {
+    console.log(`Welcome, here are our products for sale:`);
+    let quantityArr = [];
+    for (let i = 0; i < data.length; i++) {
+        console.log(`
+        ID#:${data[i].item_id}. ${data[i].product_name}
+        Current Stock: ${data[i].stock_quantity} Price: $${data[i].price}`);
+        console.log("");
+        quantityArr.push(data[i].stock_quantity);
+    };
+
+    askPurchaseInfo(quantityArr);
+     
+};
+
+function askPurchaseInfo(quantityArr) {
+    console.log("ask user what to buy");
+    
+    inquirer.prompt([
+        {
+            name: "product",
+            type: "input",
+            message: "Please enter the ID# of the product you want to purchase:"
+        },
+        {
+            name: "quantity",
+            type: "input",
+            message: "How many would you like to purchase?"
+        },
+    ]).then((answers) => {
+        quantity = answers.quantity;
+        
+        
     })
 }
 
-getProductData().then((results => {
-    console.log(results);
-}));
+function makePurchase(itemId, quantity) {
+    //update quantity in db
+    //show user total purchase amount
+};
