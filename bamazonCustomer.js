@@ -9,12 +9,10 @@ let connection = mysql.createConnection({
     database: "bamazon_db"
 });
 
+// getProductDate > displayProducts > askPurchaseInfo > makePurchase
 getProductData().then((results) => {
     displayProducts(results);
-    //inquirer ask item_id for purchase, then quantity to purchase
-    // makePurchase(itemId, quantity)
 });
-
 
 function getProductData() {
     return new Promise(function (resolve, reject) {
@@ -32,23 +30,21 @@ function getProductData() {
 };
 
 function displayProducts(data) {
-    console.log(`Welcome, here are our products for sale:`);
-    let quantityArr = [];
+    console.log(`Welcome, here are the products we have for sale:`);
+    let stockArr = [];
+    let priceArr = [];
     for (let i = 0; i < data.length; i++) {
         console.log(`
         ID#:${data[i].item_id}. ${data[i].product_name}
         Current Stock: ${data[i].stock_quantity} Price: $${data[i].price}`);
         console.log("");
-        quantityArr.push(data[i].stock_quantity);
+        stockArr.push(data[i].stock_quantity);
+        priceArr.push(data[i].price);
     };
-
-    askPurchaseInfo(quantityArr);
-     
+    askPurchaseInfo(stockArr, priceArr);  
 };
 
-function askPurchaseInfo(quantityArr) {
-    console.log("ask user what to buy");
-    
+function askPurchaseInfo(stockArr, priceArr) {    
     inquirer.prompt([
         {
             name: "product",
@@ -62,12 +58,24 @@ function askPurchaseInfo(quantityArr) {
         },
     ]).then((answers) => {
         quantity = answers.quantity;
-        
-        
-    })
-}
+        itemId = answers.product;
 
-function makePurchase(itemId, quantity) {
+        if (quantity < stockArr[itemId-1]) {
+            makePurchase(itemId, quantity, priceArr);
+        } else {
+            console.log("Sorry, we don't have enough current stock to complete your pruchase.");
+            askPurchaseInfo(stockArr, priceArr);
+        };
+        
+    });
+};
+
+
+let arr = [7, 5, 3, 2, 4, 5, 10, 8, 9, 6]
+
+function makePurchase(itemId, quantity, priceArr) {  
+    console.log("makePruchase function");
+    
     //update quantity in db
     //show user total purchase amount
 };
