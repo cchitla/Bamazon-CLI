@@ -11,8 +11,6 @@ let config = {
 
 let connection = mysql.createConnection(config);
 
-
-// getProductDate > displayProducts > askPurchaseInfo > makePurchase
 getProductData().then((results) => {
     displayProducts(results);
 });
