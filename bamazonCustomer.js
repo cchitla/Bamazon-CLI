@@ -1,13 +1,16 @@
 let mysql = require("mysql");
 let inquirer = require("inquirer");
 
-let connection = mysql.createConnection({
+let config = {
     host: "localhost",
     port: 3306,
     user: "root",
     password: "password",
     database: "bamazon_db"
-});
+};
+
+let connection = mysql.createConnection(config);
+
 
 // getProductDate > displayProducts > askPurchaseInfo > makePurchase
 getProductData().then((results) => {
@@ -23,20 +26,20 @@ function getProductData() {
             connection.query("SELECT * FROM products", (error, results) => {
                 if (error) return reject(error);
                 resolve(results);
-                connection.end();
+                connection.end();                
             });
         });
     });
 };
+
 
 function displayProducts(data) {
     console.log(`Welcome, here are the products we have for sale:`);
     let stockArr = [];
     let priceArr = [];
     for (let i = 0; i < data.length; i++) {
-        console.log(`
-        ID#:${data[i].item_id}. ${data[i].product_name}
-        Current Stock: ${data[i].stock_quantity} Price: $${data[i].price}`);
+        console.log(`ID#:${data[i].item_id}. ${data[i].product_name}
+Current Stock: ${data[i].stock_quantity} Price: $${data[i].price}`);
         console.log("");
         stockArr.push(data[i].stock_quantity);
         priceArr.push(data[i].price);
@@ -57,25 +60,40 @@ function askPurchaseInfo(stockArr, priceArr) {
             message: "How many would you like to purchase?"
         },
     ]).then((answers) => {
-        quantity = answers.quantity;
-        itemId = answers.product;
-
-        if (quantity < stockArr[itemId-1]) {
-            makePurchase(itemId, quantity, priceArr);
+        let quantity = answers.quantity;
+        let itemId = answers.product;
+        let newQuantity = stockArr[itemId-1] - quantity;
+        
+        if (quantity <= stockArr[itemId-1]) {
+            makePurchase(itemId, quantity, priceArr, newQuantity);
         } else {
             console.log("Sorry, we don't have enough current stock to complete your pruchase.");
             askPurchaseInfo(stockArr, priceArr);
         };
-        
     });
 };
 
+function makePurchase(itemId, quantity, priceArr, newQuantity) {  
+    console.log("Your purchase is being completed...");
+    let purchasePrice = quantity * priceArr[itemId-1];
 
-let arr = [7, 5, 3, 2, 4, 5, 10, 8, 9, 6]
+    connection = mysql.createConnection(config);
 
-function makePurchase(itemId, quantity, priceArr) {  
-    console.log("makePruchase function");
-    
-    //update quantity in db
-    //show user total purchase amount
+    connection.connect((error) => {
+        if (error) {
+            console.log("We're sorry there was an error completing your order. Please try again");
+            getProductData().then((results) => {
+                displayProducts(results);
+            });
+        };
+
+        let sqlQuery = "UPDATE products SET ? WHERE ?";
+        let query = [ {stock_quantity: newQuantity}, {item_id: itemId} ];
+
+        connection.query(sqlQuery, query, (error, result) => {
+            if (error) throw error;
+            console.log(`Your total is: ${purchasePrice}`);            
+        });
+
+    });
 };
