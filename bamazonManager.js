@@ -27,7 +27,7 @@ function runManager() {
         } else if (answers.action === "Update Stock") {
             updateStock();
         } else if (answers.action === "Add New Product") {
-            addNewProduct()
+            askNewProduct()
         } else if (answers.action === "Exit") {
             process.exit();
         };
@@ -36,6 +36,8 @@ function runManager() {
 
 
 function displayProducts() {
+    connection = mysql.createConnection(config);
+
     connection.connect((error) => {
         if (error) throw error;
 
@@ -48,6 +50,7 @@ Current Stock: ${results[i].stock_quantity} Price: $${results[i].price}`);
                 console.log("");
             };
             connection.end();
+            runManager();
         });
     });
 };
@@ -68,6 +71,7 @@ function updateStock() {
         let itemId = answers.itemId;
         let newQuantity = answers.quantity
         updateDb(itemId, newQuantity);
+        runManager();
     });
 
 };
@@ -90,17 +94,55 @@ function viewLowStock() {
     //
 };
 
-function addNewProduct() {
-    console.log("add new");
-    //inquirer product_name
-    //inquirer department_name
-    //inquirer price
-    //inquirer stock_quantity
-
+function askNewProduct() {
+    inquirer.prompt([
+        {
+            name: "name",
+            type: "input",
+            message: "Enter the name of the product:"
+        },
+        {
+            name: "department",
+            type: "input",
+            message: "Enter the department:"
+        },
+        {
+            name: "price",
+            type: "input",
+            message: "Enter the price for the product:"
+        },
+        {
+            name: "stock",
+            type: "input",
+            message: "Enter the stock quantity:"
+        }
+    ]).then((answers) => {
+        let newProduct = {
+            product_name: answers.name,
+            department_name: answers.department,
+            price: answers.price,
+            stock_quantity: answers.stock
+        };
+        createNewProduct(newProduct)
+    });
 };
 
+function createNewProduct(newProduct) {
+    let sqlQuery = "INSERT INTO products SET ?";
+    let query = newProduct;
+    connection = mysql.createConnection(config);
+    connection.query(sqlQuery, query, (error, results) => {
+        if (error) throw error;
+        console.log(results);
+        connection.end();
+        runManager();
+    });
+
+
+}
+
 function updateDb(itemId, newQuantity) {
-    let connection = mysql.createConnection(config);
+    connection = mysql.createConnection(config);
 
     connection.connect((error) => {
         if (error) throw error;
@@ -112,7 +154,6 @@ function updateDb(itemId, newQuantity) {
             console.log("Stock updated successfully.");
             connection.end();
             runManager();
-
         });
     });
 };
