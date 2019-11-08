@@ -10,7 +10,7 @@ const config = {
     database: "bamazon_db"
 };
 
-let connection = mysql.createConnection(config);
+let connection;
 
 runManager();
 
@@ -85,7 +85,6 @@ function updateStock() {
         let itemId = answers.itemId;
         let newQuantity = answers.quantity
         updateDb(itemId, newQuantity);
-        runManager();
     });
 };
 
@@ -150,7 +149,6 @@ function createNewProduct(newProduct) {
     connection = mysql.createConnection(config);
     connection.query(sqlQuery, query, (error, results) => {
         if (error) throw error;
-        console.log(results);
         connection.end();
         runManager();
     });
@@ -170,5 +168,7 @@ function updateDb(itemId, newQuantity) {
             connection.end();
             runManager();
         });
+        
     });
+    
 };
