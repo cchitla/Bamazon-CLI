@@ -1,7 +1,8 @@
 let mysql = require("mysql");
 let inquirer = require("inquirer");
+let Table = require("cli-table");
 
-let config = {
+const config = {
     host: "localhost",
     port: 3306,
     user: "root",
@@ -13,23 +14,32 @@ let connection = mysql.createConnection(config);
 
 runManager();
 
+
 function runManager() {
+    let choiceArray = ["View products", "View Low Inventory", "Update Stock", "Add New Product", "Exit"];
+
     inquirer.prompt([{
         name: "action",
         message: "What would you like to do?",
         type: "list",
-        choices: ["View products", "View Low Inventory", "Update Stock", "Add New Product", "Exit"]
+        choices: choiceArray
     }]).then((answers) => {
-        if (answers.action === "View products") {
-            displayProducts();
-        } else if (answers.action === "View Low Inventory") {
-            viewLowStock();
-        } else if (answers.action === "Update Stock") {
-            updateStock();
-        } else if (answers.action === "Add New Product") {
-            askNewProduct()
-        } else if (answers.action === "Exit") {
-            process.exit();
+        switch (answers.action) {
+            case choiceArray[0]:
+                displayProducts();
+                break;
+            case choiceArray[1]:
+                viewLowStock();
+                break;
+            case choiceArray[2]:
+                updateStock();
+                break;
+            case choiceArray[3]:
+                askNewProduct();
+                break;
+            case choiceArray[4]:
+                process.exit();
+                break;
         };
     });
 };
@@ -43,12 +53,16 @@ function displayProducts() {
 
         connection.query("SELECT * FROM products", (error, results) => {
             if (error) return reject(error);
+            let displayTable = new Table ({
+                head: ["Item ID", "Product Name", "Stock", "Price"],
+            colWidths: [10, 50, 10, 10]
+            });
+
             for (let i = 0; i < results.length; i++) {
-// leave this ugly indentation alone :(
-                console.log(`ID#:${results[i].item_id}. ${results[i].product_name}
-Current Stock: ${results[i].stock_quantity} Price: $${results[i].price}`);
-                console.log("");
+                displayTable.push([results[i].item_id, results[i].product_name, results[i].stock_quantity, results[i].price]);
             };
+
+            console.log(displayTable.toString());
             connection.end();
             runManager();
         });
@@ -73,21 +87,24 @@ function updateStock() {
         updateDb(itemId, newQuantity);
         runManager();
     });
-
 };
 
 function viewLowStock() {
     connection = mysql.createConnection(config);
     connection.query("SELECT * FROM products", (error, results) => {
         if (error) throw error;
+        let displayTable = new Table ({
+            head: ["Item ID", "Product Name", "Stock", "Price"],
+        colWidths: [10, 50, 10, 10]
+        });
+
         for (let i = 0; i < results.length; i++) {
             if (results[i].stock_quantity <= 5) {
-    // leave this ugly indentation alone :(
-                console.log(`ID#:${results[i].item_id}. ${results[i].product_name}
-    Current Stock: ${results[i].stock_quantity} Price: $${results[i].price}`);
-                console.log("");
-            };
+            displayTable.push([results[i].item_id, results[i].product_name, results[i].stock_quantity, results[i].price]);
+            }
         };
+
+        console.log(displayTable.toString());
         connection.end();
         runManager();
     })
@@ -137,9 +154,7 @@ function createNewProduct(newProduct) {
         connection.end();
         runManager();
     });
-
-
-}
+};
 
 function updateDb(itemId, newQuantity) {
     connection = mysql.createConnection(config);

@@ -1,5 +1,6 @@
 let mysql = require("mysql");
 let inquirer = require("inquirer");
+let Table = require("cli-table");
 
 let config = {
     host: "localhost",
@@ -15,11 +16,12 @@ getProductData().then((results) => {
     displayProducts(results);
 });
 
+
 function getProductData() {
     return new Promise(function (resolve, reject) {
         connection.connect((error) => {
             if (error) return reject(error);
-            console.log(`successfully connected on thread ${connection.threadId}`);
+            // console.log(`successfully connected on thread ${connection.threadId}`);
 
             connection.query("SELECT * FROM products", (error, results) => {
                 if (error) return reject(error);
@@ -35,15 +37,20 @@ function displayProducts(data) {
     console.log(`Welcome, here are the products we have for sale:`);
     let stockArr = [];
     let priceArr = [];
+
+    let displayTable = new Table({
+        head: ["Item ID", "Product Name", "Stock", "Price"],
+        colWidths: [10, 50, 10, 10]
+    });
+
     for (let i = 0; i < data.length; i++) {
-        console.log(`ID#:${data[i].item_id}. ${data[i].product_name}
-Current Stock: ${data[i].stock_quantity} Price: $${data[i].price}`);
-        console.log("");
-        stockArr.push(data[i].stock_quantity);
-        priceArr.push(data[i].price);
+        displayTable.push([data[i].item_id, data[i].product_name, data[i].stock_quantity, data[i].price]);
     };
+
+    console.log(displayTable.toString());
     askPurchaseInfo(stockArr, priceArr);  
 };
+
 
 function askPurchaseInfo(stockArr, priceArr) {    
     inquirer.prompt([
@@ -71,6 +78,7 @@ function askPurchaseInfo(stockArr, priceArr) {
     });
 };
 
+
 function makePurchase(itemId, quantity, priceArr, newQuantity) {  
     console.log("Your purchase is being completed...");
     let purchasePrice = quantity * priceArr[itemId-1];
@@ -92,6 +100,5 @@ function makePurchase(itemId, quantity, priceArr, newQuantity) {
             if (error) throw error;
             console.log(`Your total is: ${purchasePrice}`);            
         });
-
     });
 };
