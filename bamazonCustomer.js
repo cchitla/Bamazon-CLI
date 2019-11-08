@@ -45,6 +45,8 @@ function displayProducts(data) {
 
     for (let i = 0; i < data.length; i++) {
         displayTable.push([data[i].item_id, data[i].product_name, data[i].stock_quantity, data[i].price]);
+        stockArr.push(data[i].stock_quantity);
+        priceArr.push(data[i].price);
     };
 
     console.log(displayTable.toString());
@@ -67,7 +69,7 @@ function askPurchaseInfo(stockArr, priceArr) {
     ]).then((answers) => {
         let quantity = answers.quantity;
         let itemId = answers.product;
-        let newQuantity = stockArr[itemId-1] - quantity;
+        let newQuantity = stockArr[itemId-1] - quantity;        
         
         if (quantity <= stockArr[itemId-1]) {
             makePurchase(itemId, quantity, priceArr, newQuantity);
@@ -98,7 +100,8 @@ function makePurchase(itemId, quantity, priceArr, newQuantity) {
 
         connection.query(sqlQuery, query, (error, result) => {
             if (error) throw error;
-            console.log(`Your total is: ${purchasePrice}`);            
+            console.log(`Purchase complete! Your total is: ${purchasePrice}`);
+            process.exit();          
         });
     });
 };
